@@ -62,6 +62,9 @@ def visualize(frames, annotations, plate=plate_blue, max_num=5):
         list[np.ndarray]: Visualized frames.
     """
 
+    maps = {}
+    counter = 0
+
     assert max_num + 1 <= len(plate)
     plate = [x[::-1] for x in plate]
     frames_ = cp.deepcopy(frames)
@@ -87,20 +90,31 @@ def visualize(frames, annotations, plate=plate_blue, max_num=5):
                 box = (box * scale_ratio).astype(np.int64)
                 st, ed = tuple(box[:2]), tuple(box[2:])
                 cv2.rectangle(frame, st, ed, plate[0], 2)
+                
                 for k, lb in enumerate(label):
                     if k >= max_num:
                         break
+                                        
                     text = abbrev(lb)
                     text = ': '.join([text, str(score[k])])
                     location = (0 + st[0], 18 + k * 18 + st[1])
-                    textsize = cv2.getTextSize(text, FONTFACE, FONTSCALE,
-                                               THICKNESS)[0]
+                    textsize = cv2.getTextSize('Throwing Trash', FONTFACE, FONTSCALE, THICKNESS)[0]
                     textwidth = textsize[0]
                     diag0 = (location[0] + textwidth, location[1] - 14)
-                    diag1 = (location[0], location[1] + 2)
-                    cv2.rectangle(frame, diag0, diag1, plate[k + 1], -1)
-                    cv2.putText(frame, text, location, FONTFACE, FONTSCALE,
-                                FONTCOLOR, THICKNESS, LINETYPE)
+                    diag1 = (location[0], location[1] + 2)                                                        
+                    
+                    print(maps)
+
+                    if lb == 'carry/hold (an object)':
+                      counter = counter + 1
+
+                    if len(label) == len(maps.keys()) and maps[k] == 'carry/hold (an object)' and lb != 'carry/hold (an object)' and counter > 10:
+                      cv2.rectangle(frame, diag0, diag1, plate[k + 1], -1)    
+                      cv2.putText(frame, 'Throwing Trash', location, FONTFACE, FONTSCALE, FONTCOLOR, THICKNESS, LINETYPE)
+                      counter = 0
+                      
+                    maps[k] = lb
+                    # print(maps)
 
     return frames_
 
@@ -385,8 +399,8 @@ def main():
                     continue
                 for j in range(proposal.shape[0]):
                     if result[i][j, 4] > args.action_score_thr:
-                        prediction[j].append((label_map[i + 1], result[i][j,
-                                                                          4]))
+                        prediction[j].append((label_map[i + 1], result[i][j,4]))
+            
             predictions.append(prediction)
         prog_bar.update()
 
