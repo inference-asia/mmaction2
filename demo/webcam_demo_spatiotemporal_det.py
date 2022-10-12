@@ -749,7 +749,7 @@ class DefaultVisualizer(BaseVisualizer):
 
             # draw texts
             for k, (label, score) in enumerate(pred):
-                logger.info(label)
+                print(label)
                 
                 if k >= self.max_labels_per_bbox:
                     break
