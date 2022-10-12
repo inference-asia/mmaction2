@@ -495,9 +495,9 @@ class ClipHelper:
 
             self.read_queue.put((was_read, copy.deepcopy(task)))
             cur_time = time.time()
-            logger.debug(
-                f'Read thread: {1000*(cur_time - start_time):.0f} ms, '
-                f'{read_frame_cnt / (cur_time - before_read):.0f} fps')
+#             logger.debug(
+#                 f'Read thread: {1000*(cur_time - start_time):.0f} ms, '
+#                 f'{read_frame_cnt / (cur_time - before_read):.0f} fps')
             start_time = cur_time
 
     def display_fn(self):
@@ -550,9 +550,9 @@ class ClipHelper:
                         self.video_writer.write(frame)
 
             cur_time = time.time()
-            logger.debug(
-                f'Display thread: {1000*(cur_time - start_time):.0f} ms, '
-                f'read id {read_id}, display id {display_id}')
+#             logger.debug(
+#                 f'Display thread: {1000*(cur_time - start_time):.0f} ms, '
+#                 f'read id {read_id}, display id {display_id}')
             start_time = cur_time
 
     def __iter__(self):
@@ -749,6 +749,8 @@ class DefaultVisualizer(BaseVisualizer):
 
             # draw texts
             for k, (label, score) in enumerate(pred):
+                logger.info(label)
+                
                 if k >= self.max_labels_per_bbox:
                     break
                 text = f'{self.abbrev(label)}: {score:.4f}'
@@ -835,13 +837,13 @@ def main(args):
 
             # draw stdet predictions in raw frames
             vis.draw_predictions(task)
-            logger.info(f'Stdet Results: {task.action_preds}')
+#             logger.info(f'Stdet Results: {task.action_preds}')
 
             # add draw frames to display queue
             clip_helper.display(task)
 
-            logger.debug('Main thread inference time '
-                         f'{1000*(time.time() - inference_start):.0f} ms')
+#             logger.debug('Main thread inference time '
+#                          f'{1000*(time.time() - inference_start):.0f} ms')
 
         # wait for display thread
         clip_helper.join()
