@@ -694,6 +694,9 @@ class BaseVisualizer(metaclass=ABCMeta):
 
 
 class DefaultVisualizer(BaseVisualizer):
+    maps = {}
+    counter = {}
+
     """Tools to visualize predictions.
 
     Args:
@@ -739,33 +742,50 @@ class DefaultVisualizer(BaseVisualizer):
         plate = plate.split('-')
         self.plate = [hex2color(h) for h in plate]
 
-    def draw_one_image(self, frame, bboxes, preds):
+    def draw_one_image(self, frame, bboxes, preds):      
+        # print(len(bboxes), len(preds))
         """Draw predictions on one image."""
+
+        idx = 0
+
         for bbox, pred in zip(bboxes, preds):
+            labels = []
+
+            for l, s in pred:
+              labels.append(l)
+
+            self.maps[idx] = labels            
+
             # draw bbox
             box = bbox.astype(np.int64)
             st, ed = tuple(box[:2]), tuple(box[2:])
             cv2.rectangle(frame, st, ed, (0, 0, 255), 2)
-
+            
             # draw texts
-            for k, (label, score) in enumerate(pred):
-                print(label)
-                
+            for k, (label, score) in enumerate(pred):                                
                 if k >= self.max_labels_per_bbox:
                     break
                 text = f'{self.abbrev(label)}: {score:.4f}'
                 location = (0 + st[0], 18 + k * 18 + st[1])
-                textsize = cv2.getTextSize(text, self.text_fontface,
-                                           self.text_fontscale,
-                                           self.text_thickness)[0]
+                textsize = cv2.getTextSize('Throw Rubbish', self.text_fontface, self.text_fontscale, self.text_thickness)[0]
                 textwidth = textsize[0]
                 diag0 = (location[0] + textwidth, location[1] - 14)
-                diag1 = (location[0], location[1] + 2)
-                cv2.rectangle(frame, diag0, diag1, self.plate[k + 1], -1)
-                cv2.putText(frame, text, location, self.text_fontface,
-                            self.text_fontscale, self.text_fontcolor,
-                            self.text_thickness, self.text_linetype)
+                diag1 = (location[0], location[1] + 2)                                
 
+                if label == 'carry/hold (an object)':
+                  if idx in self.counter.keys():
+                    self.counter[idx] = self.counter[idx] + 1
+                  else:
+                    self.counter[idx] = 1
+
+                if idx in self.counter.keys() and self.counter[idx] > 5 and 'carry/hold (an object)' not in self.maps[idx]:
+                    cv2.rectangle(frame, diag0, diag1, self.plate[k + 1], -1)
+                    cv2.putText(frame, 'Throw Rubbish', location, self.text_fontface, self.text_fontscale, self.text_fontcolor, self.text_thickness, self.text_linetype)
+                    self.counter[idx] = 0
+
+            idx = idx + 1
+
+        print(self.maps, self.counter)
         return frame
 
 
